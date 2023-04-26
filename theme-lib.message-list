@@ -6,8 +6,9 @@
 <#assign showPaging = "true" />
 <#assign sorting = http.request.parameters.name.get("sort", "") />
  
-<#-- page size -->
-<#assign pageSize = coreNode.settings.name.get("layout.messages_per_page_linear", "10")?number />
+<#-- set page size to 30 posts per page -->
+<#assign pageSize = 30/>
+<#-- Didn't know if I should change the number of posts if user has a custom pageSize -->
 <#if user.registered>
    <#assign pageSizeUser = settings.name.get("layout.messages_per_page_linear") />
    <#if pageSizeUser?number != pageSize?number>
@@ -35,19 +36,28 @@
 <#assign whereClause = label_query />
  
 <#switch sorting>
-   <#case "kudos">
-       <#assign orderClause = "ORDER BY kudos.sum(weight) DESC " />
-   <#break>
-   <#case "views">
-       <#assign orderClause = "ORDER BY metrics.views DESC " />
-   <#break>
-   <#case "replies">
-       <#assign orderClause = "ORDER BY replies.count(*) DESC " />
-   <#break>
-   <#default>
-       <#assign orderClause = "ORDER BY conversation.last_post_time DESC " />
-   <#break>
+    <#case "kudos"> <!-- Sort by kudos (highest to lowest) -->
+        <#assign orderClause = "ORDER BY kudos.sum(weight) DESC " />
+    <#break>
+    <#case "views"> <!-- Sort by views (highest to lowest) -->
+        <#assign orderClause = "ORDER BY metrics.views DESC " />
+    <#break>
+    <#case "replies"> <!-- Sort by replies (highest to lowest) -->
+        <#assign orderClause = "ORDER BY replies.count(*) DESC " />
+    <#break>
+    <#case "unanswered"> <!-- Sort by unanswered questions -->
+        <#assign orderClause = "ORDER BY conversation.last_post_time ASC, replies.count(*) ASC NULLS FIRST" />
+        <!-- Note that we sort by post time (ascending) and then by number of replies (ascending) to give priority to older unanswered questions -->
+    <#break>
+    <#case "unsolved"> <!-- Sort by questions with no solution -->
+        <#assign orderClause = "ORDER BY conversation.last_post_time DESC" />
+        <!-- Sort by post time (newest to oldest) to give priority to more recent unsolved questions -->
+    <#break>
+    <#default>
+        <#assign orderClause = "ORDER BY conversation.last_post_time DESC " /> <!-- Sort by post time (newest to oldest) by default -->
+    <#break>
 </#switch>
+
  
 <#assign limitClause = "LIMIT ${pageSize} OFFSET ${offset}" />
  
@@ -148,11 +158,15 @@
        <#assign msg_status_icon = "custom-thread-floated" />
        <#assign msg_status_txt = "theme-lib.general.thread-floated" />
    </#if>
-   <#if msg.conversation.solved>
-       <#assign solved = "custom-thread-solved" />
-       <#assign msg_status_icon = "custom-thread-solved" />
-       <#assign msg_status_txt = "theme-lib.general.thread-solved" />
-   </#if>
+   <#-- Check if the message's conversation has been marked as solved -->
+    <#if msg.conversation.solved>
+        <#-- Assign a CSS class to indicate that the message is solved -->
+        <#assign solved = "solved-class" />
+        <#-- Assign a CSS class for the message status icon to indicate that the message is solved -->
+        <#assign msg_status_icon = "solved-class" />
+        <#-- Assign a message status text to indicate that the message is solved -->
+        <#assign msg_status_txt = "theme-lib.general.thread-solved" />
+    </#if>
    <#if !msg.user_context.read>
        <#assign unread = "custom-thread-unread" />
    </#if>

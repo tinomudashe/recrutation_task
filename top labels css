@@ -3,9 +3,13 @@
     font-size: 20px;
     font-weight: bold;
     padding: 0;
+    pointer-events: none;
+    /* disable pointer events */
+    cursor: default;
+    /* set default cursor */
 }
 
 .lia-quilt-column-side-content .lia-labels-list-sortable .lia-panel-heading-bar .dropdown-default-item .default-menu-option:after {
-    color: #1966FF;
-    margin-left: 10px;
+    display: none;
+    /* hide the dropdown arrow */
 }
